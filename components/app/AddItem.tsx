@@ -155,7 +155,7 @@ function Dialog({
 
         {/* day */}
         <label className="mb-1.5 block text-[13px] font-semibold text-ink-soft">Jour</label>
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-2 flex flex-wrap gap-2">
           {days.map((d, i) => {
             const k = toKey(d);
             return (
@@ -165,6 +165,14 @@ function Dialog({
             );
           })}
         </div>
+
+        <input
+          type="date"
+          value={date}
+          onChange={(e) => e.target.value && setDate(e.target.value)}
+          aria-label="Choisir une autre date (semaines à venir)"
+          className="field-input mb-4"
+        />
 
         {/* time + duration */}
         <div className="grid grid-cols-2 gap-3.5">
