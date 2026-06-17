@@ -110,7 +110,10 @@ export default async function SettingsPage() {
                         )}
                         {y && (
                           <form action={checkout.bind(null, y.id)}>
-                            <button className="btn btn-ghost btn-block btn-sm" type="submit">{money(y.unit_amount, y.currency)} / mois · annuel</button>
+                            <button className="btn btn-ghost btn-block btn-sm" type="submit">
+                              {money(y.unit_amount, y.currency)}/an
+                              {y.unit_amount != null && <span className="text-ink-soft"> · soit {money(Math.round(y.unit_amount / 12), y.currency)}/mois</span>}
+                            </button>
                           </form>
                         )}
                       </div>
