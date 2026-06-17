@@ -9,7 +9,9 @@ if (!url) {
   process.exit(1);
 }
 
-const files = ["supabase/migrations/0001_init.sql", "supabase/migrations/0002_storage.sql"];
+const files = process.argv.slice(2).length
+  ? process.argv.slice(2)
+  : ["supabase/migrations/0001_init.sql", "supabase/migrations/0002_storage.sql"];
 const client = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
 
 async function applyFile(f) {
@@ -30,13 +32,15 @@ async function applyFile(f) {
 (async () => {
   await client.connect();
   console.log("connected.");
-  const coreOk = await applyFile(files[0]);
-  if (!coreOk) {
-    console.error("core schema failed — aborting.");
-    await client.end();
-    process.exit(1);
+  for (const f of files) {
+    const ok = await applyFile(f);
+    // storage policies can hit an owner quirk on some projects — non-fatal
+    if (!ok && !f.includes("storage")) {
+      console.error("aborting.");
+      await client.end();
+      process.exit(1);
+    }
   }
-  await applyFile(files[1]); // storage: non-fatal (owner quirk possible)
 
   const { rows } = await client.query(
     "select table_name from information_schema.tables where table_schema='public' order by table_name"

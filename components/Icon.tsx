@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 /** Lucide-style inline icons (stroke = currentColor). Ported from the demo. */
 const PATHS: Record<string, string> = {
-  logo: '<path d="M12 3v18"/><path d="M5 8h14"/><path d="M3 8 1.5 14a3 3 0 0 0 6 0L6 8"/><path d="M18 8l-1.5 6a3 3 0 0 0 6 0L21 8"/><path d="M7 21h10"/>',
+  logo: '<circle cx="12" cy="12" r="9"/><path d="M12 3a4.5 4.5 0 0 1 0 9 4.5 4.5 0 0 0 0 9"/><circle cx="12" cy="7.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="16.5" r="1.3" fill="currentColor" stroke="none"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>',
   moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
   "arrow-right": '<path d="M5 12h14M13 6l6 6-6 6"/>',

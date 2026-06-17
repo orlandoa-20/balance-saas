@@ -207,3 +207,42 @@ insert into public.university_domains (domain, university, auto_approve) values
   ('sorbonne-universite.fr','Sorbonne Université', true),
   ('edu','Établissements .edu', true)
 on conflict do nothing;
+-- Private bucket for student-ID / enrollment evidence + RLS storage policies.
+
+insert into storage.buckets (id, name, public)
+values ('student-ids', 'student-ids', false)
+on conflict (id) do nothing;
+
+-- owners can read/write their own evidence; admins can read everything
+create policy "student-ids: own read"
+  on storage.objects for select
+  using (bucket_id = 'student-ids' and owner = auth.uid());
+
+create policy "student-ids: own insert"
+  on storage.objects for insert
+  with check (bucket_id = 'student-ids' and owner = auth.uid());
+
+create policy "student-ids: own delete"
+  on storage.objects for delete
+  using (bucket_id = 'student-ids' and owner = auth.uid());
+
+create policy "student-ids: admin read"
+  on storage.objects for select
+  using (bucket_id = 'student-ids' and public.is_admin());
+-- ============================================================================
+-- Harden profiles against privilege escalation.
+-- A user could previously update ANY column of their own profile row (the
+-- "own update" RLS policy is row-level, not column-level) — including
+-- role / plan / verify_status. Fix: remove blanket UPDATE and grant UPDATE
+-- only on the safe, user-owned columns. Privileged columns can then only be
+-- changed by the service role (server actions / admin / Stripe webhook).
+-- ============================================================================
+
+revoke update on public.profiles from authenticated;
+revoke update on public.profiles from anon;
+
+grant update (full_name, avatar_url, school, goal, priorities, onboarded)
+  on public.profiles to authenticated;
+
+-- role, plan, verify_status, suspended, id, created_at remain non-updatable by
+-- end users. RLS still restricts updates to the user's own row.

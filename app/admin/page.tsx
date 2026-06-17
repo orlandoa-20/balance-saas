@@ -4,12 +4,24 @@ import { adminSetVerify, adminToggleSuspend, adminSetPlan, adminToggleFlag } fro
 
 export default async function AdminPage() {
   const { admin } = await requireAdmin();
-  const [stats, users, pending, flags] = await Promise.all([
+  const [stats, users, pendingRaw, flags] = await Promise.all([
     adminStats(admin),
     listUsers(admin),
     listPendingVerifications(admin),
     listFlags(admin),
   ]);
+
+  // short-lived signed URLs so admins can review private evidence securely
+  const pending = await Promise.all(
+    pendingRaw.map(async (v) => {
+      let evidenceUrl: string | null = null;
+      if (v.evidence_url) {
+        const { data } = await admin.storage.from("student-ids").createSignedUrl(v.evidence_url, 300);
+        evidenceUrl = data?.signedUrl ?? null;
+      }
+      return { ...v, evidenceUrl };
+    })
+  );
 
   return (
     <>
@@ -30,7 +42,17 @@ export default async function AdminPage() {
               <div key={v.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
                 <div className="flex-1">
                   <div className="font-semibold">{v.profiles?.full_name ?? v.user_id.slice(0, 8)}</div>
-                  <div className="text-[12.5px] text-ink-soft">{v.method === "email_domain" ? "Email universitaire" : "Carte étudiante"} · {v.evidence_url ?? "—"}</div>
+                  <div className="text-[12.5px] text-ink-soft">
+                    {v.method === "email_domain" ? "Email universitaire" : "Carte étudiante"}
+                    {v.evidenceUrl && (
+                      <>
+                        {" · "}
+                        <a href={v.evidenceUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-evergreen-ink underline">
+                          Voir la pièce ↗
+                        </a>
+                      </>
+                    )}
+                  </div>
                 </div>
                 <form action={adminSetVerify.bind(null, v.user_id, "verified")}>
                   <button className="btn btn-primary btn-sm" type="submit">Approuver</button>
