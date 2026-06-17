@@ -36,5 +36,6 @@ export interface Profile {
   verify_status: VerifyStatus;
   goal: string | null;
   priorities: PillarId[];
+  onboarded: boolean;
   suspended: boolean;
 }
