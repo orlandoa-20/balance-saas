@@ -2,18 +2,19 @@ import { Icon } from "@/components/Icon";
 import { AppHeader } from "@/components/app/ui";
 import { AddItem } from "@/components/app/AddItem";
 import { StudyPlanGenerator } from "@/components/app/StudyPlanGenerator";
-import { getProfile, getWeekItems, getTargets, getStreak } from "@/lib/data/queries";
+import { getProfile, getWeekItems, getTargets, getStreak, getUpcoming } from "@/lib/data/queries";
 import { coachInsights } from "@/lib/coach";
-import { balanceScore, productivityScore } from "@/lib/balance";
+import { balanceScore, productivityScore, weekCompletion } from "@/lib/balance";
 
 export const metadata = { title: "Coach" };
 
 export default async function CoachPage() {
-  const [profile, week, targets, streak] = await Promise.all([
-    getProfile(), getWeekItems(), getTargets(), getStreak(),
+  const [profile, week, targets, streak, upcoming] = await Promise.all([
+    getProfile(), getWeekItems(), getTargets(), getStreak(), getUpcoming(8),
   ]);
   const name = (profile?.full_name ?? "toi").split(" ")[0];
-  const cards = coachInsights({ weekItems: week, targets, name, streak });
+  const completion = weekCompletion(week);
+  const cards = coachInsights({ weekItems: week, targets, name, streak, upcoming, completion });
   const bScore = balanceScore(week, targets);
   const pScore = productivityScore(week, targets);
   const isPro = profile?.plan === "pro";
@@ -31,6 +32,7 @@ export default async function CoachPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <Chip icon="scale">Équilibre {bScore}</Chip>
           <Chip icon="bolt">Productivité {pScore}</Chip>
+          <Chip icon="check-circle">{completion.done}/{completion.total} faites</Chip>
           <Chip icon="flame">Série {streak} j</Chip>
         </div>
       </div>
