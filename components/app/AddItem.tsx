@@ -16,10 +16,16 @@ const DURATIONS = [30, 45, 60, 90, 120, 180];
 export function AddItem({
   as = "button",
   defaultDate,
+  defaultType,
+  defaultPillar,
+  defaultTitle,
   label = "Ajouter",
 }: {
   as?: "button" | "fab" | "cta" | "day";
   defaultDate?: string;
+  defaultType?: ItemType;
+  defaultPillar?: PillarId;
+  defaultTitle?: string;
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -43,21 +49,41 @@ export function AddItem({
   return (
     <>
       {trigger}
-      {open && <Dialog defaultDate={defaultDate} onClose={() => setOpen(false)} />}
+      {open && (
+        <Dialog
+          defaultDate={defaultDate}
+          defaultType={defaultType}
+          defaultPillar={defaultPillar}
+          defaultTitle={defaultTitle}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }
 
-function Dialog({ defaultDate, onClose }: { defaultDate?: string; onClose: () => void }) {
+function Dialog({
+  defaultDate,
+  defaultType,
+  defaultPillar,
+  defaultTitle,
+  onClose,
+}: {
+  defaultDate?: string;
+  defaultType?: ItemType;
+  defaultPillar?: PillarId;
+  defaultTitle?: string;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const days = weekDays();
-  const [type, setType] = useState<ItemType>("task");
-  const [pillar, setPillar] = useState<PillarId>("academics");
+  const [type, setType] = useState<ItemType>(defaultType ?? "task");
+  const [pillar, setPillar] = useState<PillarId>(defaultPillar ?? (defaultType ? DEFAULT_PILLAR[defaultType] : "academics"));
   const [date, setDate] = useState(defaultDate ?? toKey(new Date()));
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState(60);
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(defaultTitle ?? "");
   const [repeat, setRepeat] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
