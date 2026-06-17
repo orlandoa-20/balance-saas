@@ -5,9 +5,12 @@ import type { NextConfig } from "next";
 // Anthropic. NOTE: 'unsafe-inline' for scripts covers Next's framework inline
 // + the no-flash theme script; tighten to per-request nonces before scale
 // (see ARCHITECTURE.md → security).
+// React's dev build needs eval() for debugging; allow it ONLY in development.
+const isDev = process.env.NODE_ENV !== "production";
+
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://js.stripe.com",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://js.stripe.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https:",

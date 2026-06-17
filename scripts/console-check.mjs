@@ -1,0 +1,15 @@
+import { chromium } from "@playwright/test";
+const b = await chromium.launch();
+const p = await b.newPage();
+const msgs = [];
+p.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") msgs.push(`[${m.type()}] ${m.text()}`); });
+p.on("pageerror", (e) => msgs.push(`[pageerror] ${e.message}`));
+await p.goto("http://localhost:3000/login", { waitUntil: "networkidle" });
+await p.waitForTimeout(800);
+await p.fill('input[type="email"]', process.env.SEED_EMAIL);
+await p.fill('input[type="password"]', process.env.SEED_PASSWORD);
+await p.getByRole("button", { name: /Se connecter/i }).click();
+await p.waitForURL(/\/dashboard/, { timeout: 20000 }).catch(() => {});
+await p.waitForTimeout(2500);
+await b.close();
+console.log(msgs.length ? [...new Set(msgs)].join("\n") : "no console errors/warnings");
