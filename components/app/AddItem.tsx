@@ -18,13 +18,17 @@ export function AddItem({
   defaultDate,
   label = "Ajouter",
 }: {
-  as?: "button" | "fab" | "cta";
+  as?: "button" | "fab" | "cta" | "day";
   defaultDate?: string;
   label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const trigger =
-    as === "fab" ? (
+    as === "day" ? (
+      <button onClick={() => setOpen(true)} className="flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-[12px] font-medium text-ink-faint transition hover:bg-surface-2 hover:text-evergreen-ink">
+        <Icon name="plus" className="size-[14px]" /> Ajouter
+      </button>
+    ) : as === "fab" ? (
       <button onClick={() => setOpen(true)} aria-label="Ajouter un bloc" className="fixed bottom-[86px] right-[18px] z-30 grid size-14 place-items-center rounded-[19px] text-[var(--on-primary)] shadow-[var(--sh-lg)] transition active:scale-90 lg:hidden" style={{ background: "var(--evergreen)" }}>
         <Icon name="plus" className="size-[26px]" />
       </button>
@@ -54,6 +58,7 @@ function Dialog({ defaultDate, onClose }: { defaultDate?: string; onClose: () =>
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState(60);
   const [title, setTitle] = useState("");
+  const [repeat, setRepeat] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   function pickType(t: ItemType) {
@@ -72,6 +77,7 @@ function Dialog({ defaultDate, onClose }: { defaultDate?: string; onClose: () =>
         date,
         start_time: time || null,
         duration_min: duration,
+        repeatWeeks: repeat ? 14 : 1,
       });
       if (res.ok) {
         onClose();
@@ -154,6 +160,15 @@ function Dialog({ defaultDate, onClose }: { defaultDate?: string; onClose: () =>
             </div>
           </div>
         </div>
+
+        {/* recurrence */}
+        <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-2 px-4 py-3">
+          <input type="checkbox" checked={repeat} onChange={(e) => setRepeat(e.target.checked)} className="size-[18px] accent-[var(--evergreen)]" />
+          <span className="flex items-center gap-2 text-[13.5px] font-semibold">
+            <Icon name="refresh" className="size-[18px] text-ink-soft" /> Répéter chaque semaine
+            <span className="text-ink-faint">(semestre · 14 sem.)</span>
+          </span>
+        </label>
 
         {err && <p role="alert" className="mt-3 text-[13px] font-medium text-destructive">{err}</p>}
 

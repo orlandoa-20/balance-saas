@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PILLAR_IDS } from "@/lib/constants/pillars";
 import { canCreateItem } from "@/lib/entitlements";
+import { toKey } from "@/lib/date";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -28,6 +29,8 @@ const itemSchema = z.object({
     .optional(),
   duration_min: z.coerce.number().int().min(5).max(1440),
   rrule: z.string().nullable().optional(),
+  // 1 = one-off; >1 materializes weekly occurrences (recurring classes)
+  repeatWeeks: z.coerce.number().int().min(1).max(20).default(1),
 });
 export type ItemInput = z.input<typeof itemSchema>;
 
@@ -36,12 +39,37 @@ export async function addItem(input: ItemInput): Promise<{ ok: boolean; error?: 
   const parsed = itemSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Entrée invalide" };
 
-  // entitlement check: weekly item cap on free tier
+  // entitlement check: weekly item cap on free tier (counts current week only)
   const allowed = await canCreateItem(supabase, user.id);
   if (!allowed.ok) return { ok: false, error: allowed.reason };
 
-  const { error } = await supabase.from("items").insert({ ...parsed.data, user_id: user.id });
-  if (error) return { ok: false, error: error.message };
+  const { repeatWeeks, ...base } = parsed.data;
+
+  if (repeatWeeks <= 1) {
+    const { error } = await supabase.from("items").insert({ ...base, user_id: user.id });
+    if (error) return { ok: false, error: error.message };
+  } else {
+    // recurring: insert a parent then weekly children sharing recurrence_parent
+    const { data: parent, error: e1 } = await supabase
+      .from("items")
+      .insert({ ...base, rrule: "FREQ=WEEKLY", user_id: user.id })
+      .select("id")
+      .single();
+    if (e1 || !parent) return { ok: false, error: e1?.message ?? "Erreur" };
+
+    const start = new Date(`${base.date}T00:00:00`);
+    const rows = [];
+    for (let w = 1; w < repeatWeeks; w++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + 7 * w);
+      rows.push({ ...base, rrule: "FREQ=WEEKLY", recurrence_parent: parent.id, date: toKey(d), user_id: user.id });
+    }
+    if (rows.length) {
+      const { error: e2 } = await supabase.from("items").insert(rows);
+      if (e2) return { ok: false, error: e2.message };
+    }
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/planner");
   revalidatePath("/balance");
