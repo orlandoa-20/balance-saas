@@ -1,26 +1,186 @@
 @import "tailwindcss";
 
+/* Dark mode driven by [data-theme="dark"] on <html> (cookie + system, set in layout) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* =====================================================================
+   BalanceU design tokens — calm editorial
+   cream canvas · deep evergreen + clay-rose + muted gold · Fraunces / Inter
+   (ported from the static demo: "BalanceU new/css/styles.css")
+   ===================================================================== */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #F5F1E8;
+  --bg-alt: #EFE9DC;
+  --surface: #FFFFFF;
+  --surface-2: #FBF8F1;
+  --ink: #2B2823;
+  --ink-soft: #6A6356;
+  --ink-faint: #9B9384;
+  --line: #E8E0D1;
+  --line-soft: #F0EADD;
+
+  --evergreen: #3E5A45;
+  --evergreen-2: #4B6B53;
+  --evergreen-ink: #2F4636;
+  --sage: #86A488;
+  --clay: #B07C66;
+  --clay-soft: #E6D6CC;
+  --gold: #C29A4C;
+  --gold-ink: #8C6B26;
+  --rose: #C58BA0;
+  --plum: #8B82A6;
+  --teal: #5E9A92;
+  --destructive: #C0492F;
+
+  --primary: var(--evergreen);
+  --on-primary: #FBF8F1;
+  --ring: var(--evergreen-2);
+
+  /* pillar colors */
+  --p-academics: #3E5A45;
+  --p-health: #5E9A92;
+  --p-work: #B07C66;
+  --p-sports: #C77B52;
+  --p-relationships: #C58BA0;
+  --p-finances: #C29A4C;
+  --p-growth: #8B82A6;
+
+  --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-xl: 30px;
+  --sh-sm: 0 1px 2px rgba(43,40,35,.04), 0 4px 12px -6px rgba(43,40,35,.10);
+  --sh-md: 0 2px 4px rgba(43,40,35,.05), 0 12px 28px -10px rgba(43,40,35,.16);
+  --sh-lg: 0 6px 14px rgba(43,40,35,.06), 0 30px 60px -18px rgba(43,40,35,.24);
 }
 
+[data-theme="dark"] {
+  --bg: #1A1713;
+  --bg-alt: #211C16;
+  --surface: #262019;
+  --surface-2: #2E2820;
+  --ink: #F2EAD9;
+  --ink-soft: #BFB4A1;
+  --ink-faint: #8A7F6D;
+  --line: #3A3327;
+  --line-soft: #322C22;
+
+  --evergreen: #82B08A;
+  --evergreen-2: #74A47D;
+  --evergreen-ink: #A9CBAE;
+  --sage: #8FAE90;
+  --clay: #CB957C;
+  --clay-soft: #4A3A30;
+  --gold: #D8B25F;
+  --gold-ink: #E1C079;
+  --rose: #D49EB1;
+  --plum: #A39ABF;
+  --teal: #79B3AB;
+
+  --primary: #6E9A77;
+  --on-primary: #11160F;
+  --ring: #82B08A;
+
+  --p-academics: #6E9A77;
+  --p-health: #6FAFA6;
+  --p-work: #C99178;
+  --p-sports: #D08C63;
+  --p-relationships: #D49EB1;
+  --p-finances: #D8B25F;
+  --p-growth: #A39ABF;
+
+  --sh-sm: 0 1px 2px rgba(0,0,0,.3), 0 4px 12px -6px rgba(0,0,0,.5);
+  --sh-md: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px -10px rgba(0,0,0,.55);
+  --sh-lg: 0 6px 14px rgba(0,0,0,.35), 0 30px 60px -18px rgba(0,0,0,.6);
+}
+
+/* Expose semantic tokens to Tailwind utilities (bg-surface, text-ink, …).
+   @theme inline => utilities reference the live CSS vars, so runtime theme
+   switching just works. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-alt: var(--bg-alt);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-evergreen: var(--evergreen);
+  --color-evergreen-2: var(--evergreen-2);
+  --color-evergreen-ink: var(--evergreen-ink);
+  --color-sage: var(--sage);
+  --color-clay: var(--clay);
+  --color-clay-soft: var(--clay-soft);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-rose: var(--rose);
+  --color-plum: var(--plum);
+  --color-teal: var(--teal);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-destructive: var(--destructive);
+  --color-ring: var(--ring);
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ----------------------------- base ----------------------------- */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.6; -webkit-font-smoothing: antialiased;
+  transition: background .4s ease, color .4s ease;
+}
+h1,h2,h3,h4 { font-family: var(--font-display); line-height: 1.12; letter-spacing: -0.015em; font-weight: 600; }
+:focus-visible { outline: 2.5px solid var(--ring); outline-offset: 2px; border-radius: 6px; }
+::selection { background: color-mix(in srgb, var(--evergreen) 24%, transparent); }
+
+/* ------------------------- component layer ----------------------- */
+@layer components {
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+    font-weight: 600; font-size: 15px; padding: 12px 20px; border-radius: 999px;
+    min-height: 46px; white-space: nowrap; cursor: pointer; border: none;
+    transition: transform .14s ease, box-shadow .2s ease, background .2s ease, filter .2s ease;
+  }
+  .btn:active { transform: translateY(1px) scale(.985); }
+  .btn:disabled { opacity: .55; pointer-events: none; }
+  .btn-sm { min-height: 40px; padding: 9px 16px; font-size: 14px; }
+  .btn-lg { min-height: 54px; padding: 15px 28px; font-size: 16px; }
+  .btn-block { display: flex; width: 100%; }
+  .btn-primary { background: var(--primary); color: var(--on-primary); box-shadow: var(--sh-sm); }
+  .btn-primary:hover { filter: brightness(1.06); box-shadow: var(--sh-md); }
+  .btn-accent { background: var(--clay); color: #FBF8F1; box-shadow: var(--sh-sm); }
+  .btn-accent:hover { filter: brightness(1.05); }
+  .btn-ghost { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--line), var(--sh-sm); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-soft { background: var(--bg-alt); color: var(--ink); }
+  .btn-soft:hover { background: var(--line-soft); }
+  .btn-gold { background: var(--gold); color: #2B2823; box-shadow: var(--sh-sm); }
+
+  .card { background: var(--surface); border-radius: var(--r-lg); box-shadow: 0 0 0 1px var(--line), var(--sh-sm); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600;
+    color: var(--ink-soft); background: var(--surface); padding: 7px 13px; border-radius: 999px;
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  .eyebrow { font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--clay); }
+  .field-input {
+    width: 100%; padding: 13px 14px; border-radius: var(--r-md); background: var(--surface-2);
+    border: 1.5px solid var(--line); color: var(--ink); font-size: 16px;
+    transition: border-color .18s ease, background .18s ease;
+  }
+  .field-input::placeholder { color: var(--ink-faint); }
+  .field-input:focus { outline: none; border-color: var(--ring); background: var(--surface); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .01ms !important; }
 }
