@@ -7,6 +7,10 @@ import {
   deletePriceRecord,
   manageSubscriptionStatusChange,
 } from "@/lib/stripe/sync";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/email/send";
+import { subscriptionEmail } from "@/lib/email/templates";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const relevantEvents = new Set([
   "product.created",
@@ -22,6 +26,9 @@ const relevantEvents = new Set([
 ]);
 
 export async function POST(req: Request) {
+  if (!rateLimit(`webhook:${clientIp(req)}`, 120, 60_000)) {
+    return new Response("Too Many Requests", { status: 429 });
+  }
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -65,6 +72,28 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.mode === "subscription" && session.subscription) {
           await manageSubscriptionStatusChange(session.subscription as string, session.customer as string);
+
+          // confirmation email
+          const email = session.customer_details?.email;
+          if (email) {
+            const admin = createAdminClient();
+            let tier = "Premium";
+            let name = session.customer_details?.name ?? "toi";
+            const { data: cust } = await admin
+              .from("customers")
+              .select("id")
+              .eq("stripe_customer_id", session.customer as string)
+              .single();
+            if (cust?.id) {
+              const { data: prof } = await admin.from("profiles").select("plan, full_name").eq("id", cust.id).single();
+              if (prof) {
+                tier = prof.plan === "pro" ? "Pro" : "Plus";
+                name = prof.full_name ?? name;
+              }
+            }
+            const { subject, html } = subscriptionEmail(name, tier);
+            await sendEmail({ to: email, subject, html });
+          }
         }
         break;
       }

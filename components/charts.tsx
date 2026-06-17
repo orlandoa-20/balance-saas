@@ -66,29 +66,26 @@ export function Donut({
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
-  let offset = 0;
+  const lengths = segments.map((s) => c * (s.value / total));
+  // cumulative offset before each segment (no render-time mutation)
+  const offsets = lengths.map((_, i) => lengths.slice(0, i).reduce((a, b) => a + b, 0));
   return (
     <div style={{ position: "relative", width: size, height: size, flex: "none" }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--bg-alt)" strokeWidth={stroke} />
-        {segments.map((s, i) => {
-          const len = c * (s.value / total);
-          const el = (
-            <circle
-              key={i}
-              cx={size / 2}
-              cy={size / 2}
-              r={r}
-              fill="none"
-              stroke={s.colorVar}
-              strokeWidth={stroke}
-              strokeDasharray={`${len} ${c - len}`}
-              strokeDashoffset={-offset}
-            />
-          );
-          offset += len;
-          return el;
-        })}
+        {segments.map((s, i) => (
+          <circle
+            key={i}
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke={s.colorVar}
+            strokeWidth={stroke}
+            strokeDasharray={`${lengths[i]} ${c - lengths[i]}`}
+            strokeDashoffset={-offsets[i]}
+          />
+        ))}
       </svg>
       {center && <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", textAlign: "center" }}>{center}</div>}
     </div>

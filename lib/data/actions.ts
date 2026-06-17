@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PILLAR_IDS } from "@/lib/constants/pillars";
 import { canCreateItem } from "@/lib/entitlements";
 import { toKey } from "@/lib/date";
+import { sendEmail } from "@/lib/email/send";
+import { welcomeEmail } from "@/lib/email/templates";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -127,6 +129,12 @@ export async function completeOnboarding(input: OnboardingInput): Promise<void> 
       await supabase.from("pillar_targets").update(patch).eq("user_id", user.id);
     }
   }
+  // welcome email (no-op without RESEND_API_KEY)
+  if (user.email) {
+    const { subject, html } = welcomeEmail(full_name);
+    await sendEmail({ to: user.email, subject, html });
+  }
+
   revalidatePath("/dashboard");
   redirect("/dashboard");
 }

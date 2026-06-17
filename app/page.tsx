@@ -66,9 +66,22 @@ function HeroMock() {
   );
 }
 
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "BalanceU",
+  applicationCategory: "EducationApplication",
+  operatingSystem: "Web, iOS, Android",
+  description:
+    "Planner étudiant et coach d'équilibre de vie sur 7 domaines : études, santé, travail, sport, relations, finances, développement.",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+  aggregateRating: { "@type": "AggregateRating", ratingValue: "4.9", ratingCount: "1200" },
+};
+
 export default function LandingPage() {
   return (
     <div className="min-h-dvh">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       {/* nav */}
       <header className="sticky top-0 z-40 border-b border-transparent bg-[color-mix(in_srgb,var(--bg)_82%,transparent)] backdrop-blur-md">
         <div className="mx-auto flex h-[70px] max-w-[1120px] items-center justify-between gap-4 px-6">
@@ -127,7 +140,7 @@ export default function LandingPage() {
         <section id="features" className="mx-auto max-w-[1120px] px-6 py-16">
           <div className="mx-auto mb-10 max-w-[640px] text-center">
             <span className="eyebrow">Pensé pour ta vie entière</span>
-            <h2 className="mt-3.5 text-[clamp(28px,4.5vw,40px)]">Plus qu'un agenda. Un coach d'équilibre.</h2>
+            <h2 className="mt-3.5 text-[clamp(28px,4.5vw,40px)]">Plus qu&apos;un agenda. Un coach d&apos;équilibre.</h2>
             <p className="mt-3 text-[16.5px] text-ink-soft">Quatre piliers qui transforment des to-do lists en une routine durable.</p>
           </div>
           <div className="grid gap-[18px] sm:grid-cols-2">
