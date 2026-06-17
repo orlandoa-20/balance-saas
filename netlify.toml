@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+# Netlify's Next.js runtime (SSR, server actions, route handlers, proxy).
+# NOTE: Next.js 16 support in this plugin may lag — if the build fails, deploy
+# to Vercel or pin Next to 15. Vercel ignores this file; Netlify ignores vercel.json.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "22"
