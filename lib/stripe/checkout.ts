@@ -5,7 +5,12 @@ import { stripe } from "@/lib/stripe/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const SITE = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+// Normalize: ensure a scheme (Stripe rejects scheme-less URLs) + no trailing slash.
+const SITE = () => {
+  let s = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").trim();
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+  return s.replace(/\/+$/, "");
+};
 
 async function getOrCreateCustomer(userId: string, email: string): Promise<string> {
   const admin = createAdminClient();
