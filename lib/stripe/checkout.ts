@@ -25,18 +25,27 @@ export async function checkout(priceId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const customer = await getOrCreateCustomer(user.id, user.email ?? "");
-  const session = await stripe.checkout.sessions.create({
-    customer,
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    allow_promotion_codes: true,
-    success_url: `${SITE()}/settings?checkout=success`,
-    cancel_url: `${SITE()}/settings?checkout=cancel`,
-    subscription_data: { metadata: { supabase_uid: user.id } },
-  });
-  if (session.url) redirect(session.url);
-  redirect("/settings?checkout=error");
+  let url: string | null = null;
+  let errMsg: string | null = null;
+  try {
+    const customer = await getOrCreateCustomer(user.id, user.email ?? "");
+    const session = await stripe.checkout.sessions.create({
+      customer,
+      mode: "subscription",
+      line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      success_url: `${SITE()}/settings?checkout=success`,
+      cancel_url: `${SITE()}/settings?checkout=cancel`,
+      subscription_data: { metadata: { supabase_uid: user.id } },
+    });
+    url = session.url;
+  } catch (e) {
+    errMsg = e instanceof Error ? e.message : "Erreur Stripe inconnue.";
+    console.error("Stripe checkout error:", errMsg);
+  }
+  // redirect() must be OUTSIDE try (it throws a control-flow signal)
+  if (url) redirect(url);
+  redirect(`/settings?checkout_error=${encodeURIComponent((errMsg ?? "Aucune URL de session").slice(0, 180))}`);
 }
 
 /** Open the Stripe Billing Portal (cancel / upgrade / downgrade / invoices). */

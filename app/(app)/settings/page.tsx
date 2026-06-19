@@ -27,7 +27,12 @@ function money(amount: number | null, currency: string) {
   return `${(amount / 100).toFixed(2).replace(".", ",")} ${currency.toUpperCase() === "EUR" ? "€" : currency.toUpperCase()}`;
 }
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout_error?: string; checkout?: string }>;
+}) {
+  const sp = await searchParams;
   const [profile, prices, sub] = await Promise.all([getProfile(), getActivePrices(), getSubscription()]);
   if (!profile) return null;
 
@@ -45,6 +50,17 @@ export default async function SettingsPage() {
         <div className="eyebrow">Profil</div>
         <h1 className="mt-1.5 text-[28px]">Toi &amp; tes réglages</h1>
       </div>
+
+      {sp.checkout_error && (
+        <div className="mb-5 rounded-2xl bg-[color-mix(in_srgb,var(--destructive)_9%,var(--surface))] p-4 text-[14px] font-medium text-destructive shadow-[0_0_0_1px_color-mix(in_srgb,var(--destructive)_30%,transparent)]">
+          Échec du paiement : {decodeURIComponent(sp.checkout_error)}
+        </div>
+      )}
+      {sp.checkout === "success" && (
+        <div className="mb-5 rounded-2xl bg-[color-mix(in_srgb,var(--evergreen)_12%,var(--surface))] p-4 text-[14px] font-medium text-evergreen-ink">
+          Paiement réussi — ton abonnement s&apos;active à l&apos;instant. ✓
+        </div>
+      )}
 
       {/* profile */}
       <div className="card mb-5 flex items-center gap-4 p-5">
