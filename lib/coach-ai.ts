@@ -64,7 +64,11 @@ export async function generateStudyPlan(): Promise<{ ok: boolean; plan?: string;
       headers: { "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01" },
       body: JSON.stringify(body),
     });
-    if (!res.ok) return { ok: false, error: `Erreur IA (${res.status}).` };
+    if (!res.ok) {
+      const detail = await res.text();
+      console.error("Anthropic error", res.status, detail);
+      return { ok: false, error: `Erreur IA (${res.status}) : ${detail.slice(0, 240)}` };
+    }
     const json = (await res.json()) as { content?: { text?: string }[] };
     return { ok: true, plan: json.content?.[0]?.text ?? "" };
   } catch {
