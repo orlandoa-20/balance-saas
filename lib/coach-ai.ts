@@ -66,8 +66,8 @@ export async function generateStudyPlan(): Promise<{ ok: boolean; plan?: string;
     });
     if (!res.ok) {
       const detail = await res.text();
-      console.error("Anthropic error", res.status, detail);
-      return { ok: false, error: `Erreur IA (${res.status}) : ${detail.slice(0, 240)}` };
+      console.error("Anthropic error", res.status, detail); // real detail in server logs only
+      return { ok: false, error: "Le coach IA est momentanément indisponible. Réessaie un peu plus tard." };
     }
     const json = (await res.json()) as { content?: { text?: string }[] };
     return { ok: true, plan: json.content?.[0]?.text ?? "" };
