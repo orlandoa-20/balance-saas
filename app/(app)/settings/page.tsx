@@ -87,6 +87,8 @@ export default async function SettingsPage({
                 <div className="text-[13px] text-ink-soft">
                   {sub.cancel_at_period_end ? "Se termine" : "Renouvellement"} le {new Date(sub.current_period_end).toLocaleDateString("fr-FR")}
                 </div>
+              ) : profile.plan !== "free" ? (
+                <div className="text-[13px] text-ink-soft">Abonnement {PLAN_LABEL[profile.plan]} actif</div>
               ) : (
                 <div className="text-[13px] text-ink-soft">Gratuit · 15 blocs/semaine</div>
               )}

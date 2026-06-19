@@ -70,24 +70,30 @@ export async function manageSubscriptionStatusChange(subscriptionId: string, cus
 
   const sub = (await stripe.subscriptions.retrieve(subscriptionId, {
     expand: ["items.data.price.product"],
-  })) as unknown as Stripe.Subscription & {
-    current_period_start: number;
-    current_period_end: number;
-  };
+  })) as unknown as Stripe.Subscription;
 
-  const item = sub.items.data[0];
+  // The current Stripe API exposes the billing period on the subscription ITEM;
+  // older versions had it on the subscription. Read item first, fall back.
+  const item = sub.items.data[0] as (typeof sub.items.data)[number] & {
+    current_period_start?: number;
+    current_period_end?: number;
+  };
+  const subLevel = sub as unknown as { current_period_start?: number; current_period_end?: number };
   const price = item?.price;
   const productId = price ? (typeof price.product === "string" ? price.product : price.product.id) : null;
+  const nowISO = new Date().toISOString();
+  const periodStart = toISO(item?.current_period_start ?? subLevel.current_period_start) ?? nowISO;
+  const periodEnd = toISO(item?.current_period_end ?? subLevel.current_period_end) ?? nowISO;
 
-  await admin.from("subscriptions").upsert({
+  const { error: subErr } = await admin.from("subscriptions").upsert({
     id: sub.id,
     user_id: userId,
     status: sub.status,
     price_id: price?.id ?? null,
     quantity: item?.quantity ?? 1,
     cancel_at_period_end: sub.cancel_at_period_end,
-    current_period_start: toISO(sub.current_period_start),
-    current_period_end: toISO(sub.current_period_end),
+    current_period_start: periodStart,
+    current_period_end: periodEnd,
     cancel_at: toISO(sub.cancel_at),
     canceled_at: toISO(sub.canceled_at),
     ended_at: toISO(sub.ended_at),
@@ -95,6 +101,7 @@ export async function manageSubscriptionStatusChange(subscriptionId: string, cus
     trial_end: toISO(sub.trial_end),
     metadata: sub.metadata,
   });
+  if (subErr) console.error("subscription upsert failed:", subErr.message);
 
   const active = sub.status === "active" || sub.status === "trialing";
   const plan: PlanTier = active ? tierForProduct(productId) : "free";
