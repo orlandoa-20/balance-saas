@@ -1,16 +1,26 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe/config";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// Normalize: ensure a scheme (Stripe rejects scheme-less URLs) + no trailing slash.
-const SITE = () => {
+/**
+ * Absolute origin derived from the ACTUAL request (so Stripe redirects back to
+ * whatever domain the user is on — prod, preview, or localhost). Falls back to
+ * NEXT_PUBLIC_SITE_URL, then localhost. This avoids the "redirects to localhost"
+ * bug when the env var is unset/misconfigured.
+ */
+async function getOrigin(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  if (host) return `${proto}://${host}`;
   let s = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").trim();
   if (!/^https?:\/\//i.test(s)) s = "https://" + s;
   return s.replace(/\/+$/, "");
-};
+}
 
 async function getOrCreateCustomer(userId: string, email: string): Promise<string> {
   const admin = createAdminClient();
@@ -30,6 +40,7 @@ export async function checkout(priceId: string): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const site = await getOrigin();
   let url: string | null = null;
   let errMsg: string | null = null;
   try {
@@ -39,8 +50,8 @@ export async function checkout(priceId: string): Promise<void> {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
-      success_url: `${SITE()}/settings?checkout=success`,
-      cancel_url: `${SITE()}/settings?checkout=cancel`,
+      success_url: `${site}/settings?checkout=success`,
+      cancel_url: `${site}/settings?checkout=cancel`,
       subscription_data: { metadata: { supabase_uid: user.id } },
     });
     url = session.url;
@@ -67,7 +78,7 @@ export async function billingPortal(): Promise<void> {
 
   const portal = await stripe.billingPortal.sessions.create({
     customer: data.stripe_customer_id,
-    return_url: `${SITE()}/settings`,
+    return_url: `${await getOrigin()}/settings`,
   });
   redirect(portal.url);
 }
