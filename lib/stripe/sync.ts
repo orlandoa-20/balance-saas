@@ -80,7 +80,6 @@ export async function manageSubscriptionStatusChange(subscriptionId: string, cus
   };
   const subLevel = sub as unknown as { current_period_start?: number; current_period_end?: number };
   const price = item?.price;
-  const productId = price ? (typeof price.product === "string" ? price.product : price.product.id) : null;
   const nowISO = new Date().toISOString();
   const periodStart = toISO(item?.current_period_start ?? subLevel.current_period_start) ?? nowISO;
   const periodEnd = toISO(item?.current_period_end ?? subLevel.current_period_end) ?? nowISO;
@@ -103,7 +102,19 @@ export async function manageSubscriptionStatusChange(subscriptionId: string, cus
   });
   if (subErr) console.error("subscription upsert failed:", subErr.message);
 
-  const active = sub.status === "active" || sub.status === "trialing";
-  const plan: PlanTier = active ? tierForProduct(productId) : "free";
+  // Reconcile the plan from ALL of the user's active subscriptions — highest
+  // tier wins (so two concurrent subs, or a Plus event after a Pro event,
+  // don't downgrade the user).
+  const rank: Record<PlanTier, number> = { free: 0, plus: 1, pro: 2 };
+  const { data: activeSubs } = await admin
+    .from("subscriptions")
+    .select("status, prices(product_id)")
+    .eq("user_id", userId)
+    .in("status", ["active", "trialing"]);
+  let plan: PlanTier = "free";
+  for (const s of (activeSubs ?? []) as { prices?: { product_id?: string | null } | null }[]) {
+    const t = tierForProduct(s.prices?.product_id ?? null);
+    if (rank[t] > rank[plan]) plan = t;
+  }
   await admin.from("profiles").update({ plan }).eq("id", userId);
 }
